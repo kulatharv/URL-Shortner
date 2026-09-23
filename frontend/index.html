@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShortPulse | Ultra-Fast Scalable URL Shortener & Analytics</title>
+    <meta name="description" content="Production-grade URL Shortener & Analytics platform built with FastAPI, Base62 encoding, atomic click tracking, link expiration, and rate limiting.">
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Animated Mesh & Orbs -->
+    <div class="glow-orb orb-primary"></div>
+    <div class="glow-orb orb-secondary"></div>
+    <div class="glow-orb orb-accent"></div>
+    <div class="bg-grid-overlay"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar-wrapper">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <div class="logo-box">
+                    <i class="fa-solid fa-bolt-lightning logo-icon"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">Short<span class="gradient-text-subtle">Pulse</span></span>
+                    <span class="brand-badge">v1.0 Pro</span>
+                </div>
+            </div>
+
+            <div class="nav-metrics">
+                <div class="metric-pill">
+                    <span class="status-indicator online"></span>
+                    <span class="metric-label">FastAPI Engine</span>
+                    <span class="metric-value">&lt; 5ms</span>
+                </div>
+                <div class="metric-pill display-desktop">
+                    <i class="fa-solid fa-layer-group text-accent"></i>
+                    <span class="metric-label">Base62 Encoding</span>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <a href="/docs" target="_blank" class="nav-btn btn-ghost" title="Interactive API Specs (Swagger)">
+                    <i class="fa-solid fa-code"></i>
+                    <span>API Docs</span>
+                </a>
+                <a href="https://github.com" target="_blank" class="nav-btn btn-ghost-icon" title="View Source">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Application Canvas -->
+    <main class="app-canvas">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-badge">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber"></i>
+                <span>Scalable URL Shortener & Analytics</span>
+            </div>
+            <h1 class="hero-heading">
+                Transform Long Links into <br>
+                <span class="gradient-headline">Powerful Insights</span>
+            </h1>
+            <p class="hero-subtext">
+                Generate high-conversion short links with custom aliases, link expiration, atomic click tracking, and real-time visual analytics.
+            </p>
+        </section>
+
+        <!-- Main Shortener Workbench Card -->
+        <section class="workbench-card">
+            <!-- URL Input Form -->
+            <form id="shorten-form" class="shorten-form" autocomplete="off">
+                <div class="url-input-container">
+                    <div class="url-input-icon">
+                        <i class="fa-solid fa-link"></i>
+                    </div>
+                    <input 
+                        type="url" 
+                        id="long-url" 
+                        class="main-url-input" 
+                        placeholder="Paste your destination URL (e.g. https://github.com/fastapi/fastapi)..." 
+                        required
+                    >
+                    <button type="button" id="paste-btn" class="input-action-btn" title="Paste from Clipboard">
+                        <i class="fa-solid fa-paste"></i>
+                        <span>Paste</span>
+                    </button>
+                    <button type="button" id="clear-btn" class="input-action-btn hidden" title="Clear Input">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button type="submit" id="submit-btn" class="btn-primary-glow">
+                        <span class="btn-text">Shorten URL</span>
+                        <i class="fa-solid fa-wand-magic-sparkles btn-icon"></i>
+                    </button>
+                </div>
+
+                <!-- URL Validation Live Hint -->
+                <div id="url-validation-hint" class="validation-hint hidden">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span id="hint-text">Enter a valid HTTP or HTTPS destination link</span>
+                </div>
+
+                <!-- Options Tabs Control -->
+                <div class="options-bar">
+                    <div class="options-tabs">
+                        <button type="button" class="tab-chip active" data-tab="tab-alias">
+                            <i class="fa-solid fa-pen-nib"></i> Custom Alias
+                        </button>
+                        <button type="button" class="tab-chip" data-tab="tab-expiry">
+                            <i class="fa-solid fa-stopwatch"></i> Link Expiration
+                        </button>
+                    </div>
+                    <div class="rate-limit-badge">
+                        <i class="fa-solid fa-shield-halved"></i> 10 req/min IP Rate Limited
+                    </div>
+                </div>
+
+                <!-- Tab Panes Container -->
+                <div class="tab-content-container">
+                    <!-- Tab 1: Custom Alias -->
+                    <div id="tab-alias" class="tab-pane active">
+                        <div class="option-field-row">
+                            <div class="field-label-group">
+                                <label for="custom-alias">Custom Short Alias</label>
+                                <span class="field-help">Create a branded, memorable keyword</span>
+                            </div>
+                            <div class="custom-alias-input-group">
+                                <span class="alias-domain-prefix" id="alias-domain-prefix">shortpulse/</span>
+                                <input 
+                                    type="text" 
+                                    id="custom-alias" 
+                                    placeholder="my-campaign-2026" 
+                                    maxlength="30"
+                                    pattern="[a-zA-Z0-9_-]+"
+                                >
+                                <div id="alias-status-indicator" class="alias-status hidden">
+                                    <i class="fa-solid fa-check text-emerald"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Link Expiration -->
+                    <div id="tab-expiry" class="tab-pane">
+                        <div class="option-field-row">
+                            <div class="field-label-group">
+                                <label>Expiration Presets</label>
+                                <span class="field-help">Automatically invalidate access after duration</span>
+                            </div>
+                            <div class="expiry-presets">
+                                <button type="button" class="preset-btn" data-minutes="15">15 Mins</button>
+                                <button type="button" class="preset-btn" data-minutes="60">1 Hour</button>
+                                <button type="button" class="preset-btn" data-minutes="1440">24 Hours</button>
+                                <button type="button" class="preset-btn" data-minutes="10080">7 Days</button>
+                                <button type="button" class="preset-btn active" data-minutes="0">Never</button>
+                            </div>
+                            <div class="custom-expiry-input-wrapper">
+                                <input type="number" id="custom-expires-in" placeholder="Custom expiry in minutes..." min="1" max="525600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Generated Short Link Result Card (Revealed on Success) -->
+            <div id="result-card" class="result-display-card hidden">
+                <div class="result-header">
+                    <div class="result-status-badge">
+                        <i class="fa-solid fa-circle-check text-emerald"></i>
+                        <span>Short Link Ready!</span>
+                    </div>
+                    <div class="result-meta">
+                        <span id="result-created-time"><i class="fa-regular fa-clock"></i> Just created</span>
+                    </div>
+                </div>
+
+                <div class="result-body-grid">
+                    <div class="short-link-output-box">
+                        <input type="text" id="result-short-url" readonly>
+                        <button type="button" id="copy-result-btn" class="btn-copy-highlight">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Copy Link</span>
+                        </button>
+                    </div>
+
+                    <div class="result-quick-actions">
+                        <a id="test-redirect-link" href="#" target="_blank" class="btn-action-outline">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            <span>Test Redirect</span>
+                        </a>
+                        <button type="button" id="open-qr-modal-btn" class="btn-action-outline">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Get QR Code</span>
+                        </button>
+                        <button type="button" id="inspect-result-btn" class="btn-action-outline">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span>View Analytics</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Analytics & Links History Section -->
+        <section class="dashboard-section">
+            <div class="dashboard-columns">
+                
+                <!-- Left Panel: Real-Time Analytics Inspection Card -->
+                <div class="panel-card analytics-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-chart-column panel-icon text-indigo"></i>
+                            <div>
+                                <h3>Real-Time Analytics</h3>
+                                <p class="panel-sub">Inspect redirection traffic and link health</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-search-bar">
+                        <div class="search-input-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="analytics-input" placeholder="Enter short code or custom alias (e.g. abc123)...">
+                        </div>
+                        <button type="button" id="analytics-submit-btn" class="btn-secondary-glow">
+                            <span>Inspect</span>
+                        </button>
+                    </div>
+
+                    <!-- Analytics Metric Display Canvas -->
+                    <div id="analytics-canvas" class="analytics-canvas empty-canvas">
+                        <div class="empty-state">
+                            <div class="empty-icon-ring">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <h4>No Link Selected</h4>
+                            <p>Enter a short code above or click "Inspect" on any link from the table to view click counts & analytics.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Paginated Links Table Card -->
+                <div class="panel-card history-panel">
+                    <div class="panel-header flex-between">
+                        <div class="panel-title">
+                            <i class="fa-solid fa-clock-rotate-left panel-icon text-purple"></i>
+                            <div>
+                                <h3>Short Links Directory</h3>
+                                <p class="panel-sub">Manage and monitor created URLs</p>
+                            </div>
+                        </div>
+                        <div class="panel-controls">
+                            <button type="button" id="refresh-table-btn" class="icon-refresh-btn" title="Refresh Table">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter / Search Header -->
+                    <div class="table-filter-bar">
+                        <div class="filter-search-input">
+                            <i class="fa-solid fa-filter"></i>
+                            <input type="text" id="table-search-input" placeholder="Search recent links...">
+                        </div>
+                        <div class="filter-pills">
+                            <button type="button" class="filter-chip active" data-filter="all">All</button>
+                            <button type="button" class="filter-chip" data-filter="active">Active</button>
+                            <button type="button" class="filter-chip" data-filter="expired">Expired</button>
+                        </div>
+                    </div>
+
+                    <!-- Data Table -->
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Short Code</th>
+                                    <th>Destination URL</th>
+                                    <th class="text-center">Clicks</th>
+                                    <th>Status</th>
+                                    <th class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="links-tbody">
+                                <tr>
+                                    <td colspan="5" class="table-loading-cell">
+                                        <i class="fa-solid fa-spinner fa-spin"></i> Loading short links...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div class="pagination-bar">
+                        <span class="pagination-count-text" id="pagination-info">Showing 0 of 0 links</span>
+                        <div class="pagination-nav-btns">
+                            <button type="button" id="prev-page" class="btn-page-nav" disabled>
+                                <i class="fa-solid fa-chevron-left"></i>
+                                <span>Prev</span>
+                            </button>
+                            <span class="page-number-indicator" id="page-indicator">1</span>
+                            <button type="button" id="next-page" class="btn-page-nav" disabled>
+                                <span>Next</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: QR Code Studio -->
+    <div id="qr-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <i class="fa-solid fa-qrcode text-indigo"></i>
+                    <h3>QR Code Studio</h3>
+                </div>
+                <button type="button" id="close-qr-modal" class="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="qr-canvas-card">
+                    <div id="qrcode-wrapper" class="qrcode-wrapper"></div>
+                </div>
+                <div class="qr-url-box">
+                    <span id="qr-target-url" class="qr-url-text">http://127.0.0.1:8000/abc123</span>
+                </div>
+                <div class="qr-modal-actions">
+                    <button type="button" id="copy-qr-link-btn" class="btn-modal-primary">
+                        <i class="fa-solid fa-copy"></i> Copy Short Link
+                    </button>
+                    <a id="download-qr-btn" download="qrcode.png" class="btn-modal-secondary">
+                        <i class="fa-solid fa-download"></i> Save QR Image
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript App Controller -->
+    <script src="script.js"></script>
+</body>
+</html>

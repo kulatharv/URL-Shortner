@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: url-shortener-fastapi
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./url_shortener.db
+      - key: BASE_URL
+        sync: false
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 20
